@@ -1,0 +1,164 @@
+###############################################
+# Computational Physics Assignment 1 Problem 1
+#
+# February 5, 2018
+###############################################
+import numpy as np
+import matplotlib.pyplot as plt
+
+#computes the sine of an argument
+def sinefunc(argument):
+    sine = np.sin(argument)
+    #print("sine has been called!", sine)
+    return sine 
+
+def sine_part_F(argument):
+    sine = np.sin(2*np.pi*argument)
+    return sine 
+
+def sine_f_error(argument):
+    sine = 0.01*np.sin(100*np.sqrt(2.0)*np.pi*argument)
+    return sine 
+
+#estimates the first derivative of a function using the central difference
+def central_diff(funcname,x,h):
+    first_deriv = (funcname(x+h/2)-funcname(x-h/2))/h 
+    return first_deriv
+
+#estimates the third derivative of a function using the first derivative  
+def third_deriv(central_diff,x,h,funcname):
+    z = (8/h**2)*(central_diff(funcname,x,2*h)-central_diff(funcname,x,h))
+    return z 
+
+#estimates first derivative using second order accurate forward difference
+def forward_diff(values,n,h):
+    forward_diff = ((-1.5)*values[n]+2.0*values[n+1]-(0.5)*values[n+2])/h 
+    return forward_diff
+
+#estimates first derivative using second order backward difference
+def backward_diff(values,n,h):
+    backward_diff = ((1.5)*values[n]-2.0*values[n-1]+(0.5)*values[n-2])/h
+    return backward_diff
+
+#calculates central difference for a given array of points
+def central_diff2(values,n,h):
+    central_diff2 = (values[n+1]-values[n-1])/(2.0*h)
+    return central_diff2
+    
+#calculates derivative for finite number of evenly spaced points 
+def finite_deriv(points,function):
+    delta_x = points[1]-points[0]
+    n = len(points)
+    
+    #create an array for the derivative 
+    derivative = np.zeros((n))
+    
+    #use forward difference to calculate derivative at first point
+    derivative[0] = forward_diff(function,0,delta_x)
+    
+    #use backward difference to calculate derivative at last point
+    derivative[n-1] = backward_diff(function,n-1,delta_x)
+ 
+    #fill derivative array interior points
+    #print('range:')
+    for i in range(1, n-1):
+        #print(i)
+        derivative[i] = central_diff2(function,i,delta_x)
+    return derivative 
+    
+def main():
+#Number 1, part b  
+    #Give parameters 
+    x = np.pi/4
+    h = np.zeros((10))
+    #fill h array
+    for i in range(0,len(h)):
+        h[i] = 10**(-i-1)
+    #print h 
+    
+    #estimate the first derivative using Taylor Series
+    y = central_diff(sinefunc,x,h)
+   # print("The central difference is: ", y)
+    
+    #find the actual first derivative
+    actual_deriv = np.cos(x)
+    #print("The actual first derivative is: ", actual_deriv)
+    
+    #plot the difference as a function of h 
+    difference = abs(y-actual_deriv)
+    #print("The error is: ", difference)
+    plt.figure(1)
+    plt.loglog(h, difference,'bo')
+    plt.xlabel('step size h')
+    plt.ylabel('GLobal Error')
+    
+#Number 1 part d 
+    #find optimized value of h 
+    h_guess = 0.01
+    epsilon_p = 2.22*10**(-16)
+    epsilon_roundoff = epsilon_p*np.sin(x)/h_guess
+    hstar = np.sqrt(np.abs(24*epsilon_roundoff/third_deriv(central_diff,x,h_guess,sinefunc)))
+    print("Optimized h is: ", hstar)
+    
+    #compute derivative at one point using optimized h
+    opt_h_deriv = central_diff(sinefunc,x,hstar)
+    #print("The first derivative at one point with optimized h is: ",opt_h_deriv)
+
+#Number 1, part e     
+    n=20
+    delta_x = 0.01
+    points = np.zeros((n))
+    points[0] = 0
+    for i in range(1,len(points)):
+        points[i] = points[i-1]+delta_x
+    #evaluate the function at list of points
+    e_function = np.sin(points)
+    derivative_list = finite_deriv(points,e_function)
+    #print('full set of derivatives: ', derivative_list)
+    
+#Number 1, part f
+    #number of points minus 1
+    N = 100
+    
+    #delta x for part f
+    delta_x_f = 0.01
+    
+    #create and fill points array 
+    partF_points=np.zeros((N+1))
+    for i in range(1,len(partF_points)):
+        partF_points[i]=partF_points[i-1]+delta_x_f
+    #print(partF_points)
+    
+    #create sine function
+    f = np.sin(2*np.pi*partF_points)
+    print('f = ', f)
+    
+    #calculate derivative of function at list of points 
+    derivative_part_f = finite_deriv(partF_points, f)
+    #print(derivative_part_f)
+
+    error = 0.01*np.sin(100*np.sqrt(2.0)*np.pi*partF_points)
+    #print('error: ', error)
+    g = f+error
+   # print('g', g)
+   
+   #plot the function and the noise
+    plt.figure(2)
+    plt.plot(partF_points, f, 'k.')
+    plt.plot(partF_points, g, 'b+')
+    plt.xlabel('x')
+    plt.ylabel('f(x)')
+    
+    g_deriv = finite_deriv(partF_points,g)
+    #print(g)
+    
+    #plot derivative of function and noise
+    plt.figure(3)
+    plt.plot(partF_points,derivative_part_f,'k.')
+    plt.plot(partF_points, g_deriv,'b*')
+    plt.xlabel('x values')
+    plt.ylabel('derivative of function')
+    
+main()
+    
+    
